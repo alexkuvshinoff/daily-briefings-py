@@ -51,7 +51,7 @@ sheet = doc.worksheet(SHEET_NAME) #> <class 'gspread.models.Worksheet'>
 
 rows = sheet.get_all_records() #> <class 'list'>
 
-email_brithdays = []
+email_birthdays = []
 todaysDate = date.today()
 
 for row in rows:
@@ -59,6 +59,25 @@ for row in rows:
     if rowDate == todaysDate:
         print(row) #> <class 'dict'>
 
+if __name__ == "__main__":
 
+    if APP_ENV == "development":
+        birthday_date = input("PLEASE INPUT A DATE (e.g. 09/04/1993): ")
+        birthday_results = get_todays_birthday(todaysDate=birthday_date) # invoke with custom params
+    else:
+        Print("No Birthday's Today!")
+
+    #print(birthday_results)
+
+    html = ""
+    html += f"<h3>Good Morning, {MY_NAME}!</h3>"
+
+    html += "<h4>Today's Date</h4>"
+    html += f"<p>{date.today().strftime('%A, %B %d, %Y')}</p>"
+
+    html += f"<h4>Today's Birthdays" {birthday_results["First Name:", "Last Name:", "Age"].title()}</h4>"
+    html += "<ul>"
+ 
+    send_email(subject="Birthday's Today", html=html)
 
 
