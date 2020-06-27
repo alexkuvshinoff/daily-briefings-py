@@ -1,40 +1,72 @@
 # app/birthday_tracker.py
 
-import os
 from dotenv import load_dotenv
-from datetime import date
-#from pprint import pprint
+import os
 
-#pip install gspread oauth2client
-
-from app import APP_ENV
-from app.weather_service import get_hourly_forecasts
-from app.email_service import send_email
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 load_dotenv()
 
-MY_NAME = os.getenv("MY_NAME", default="Player 1")
+DOCUMENT_ID = os.environ.get("GOOGLE_SHEET_ID", "OOPS")
+SHEET_NAME = os.environ.get("SHEET_NAME", "Products")
 
-if __name__ == "__main__":
+#
+# AUTHORIZATION
+#
 
-    if APP_ENV == "development":
-        zip_code = input("PLEASE INPUT A ZIP CODE (e.g. 06510): ")
-        weather_results = get_hourly_forecasts(zip_code=zip_code) # invoke with custom params
-    else:
-        weather_results = get_hourly_forecasts() # invoke with default params
+CREDENTIALS_FILEPATH = os.path.join(os.path.dirname(__file__), "..", "auth", "spreadsheet_credentials.json")
 
-    #print(weather_results)
+AUTH_SCOPE = [
+    "https://www.googleapis.com/auth/spreadsheets", #> Allows read/write access to the user's sheets and their properties.
+    "https://www.googleapis.com/auth/drive.file" #> Per-file access to files created or opened by the app.
+]
 
-    html = ""
-    html += f"<h3>Good Morning, {MY_NAME}!</h3>"
+credentials = ServiceAccountCredentials.from_json_keyfile_name(CREDENTIALS_FILEPATH, AUTH_SCOPE)
 
-    html += "<h4>Today's Date</h4>"
-    html += f"<p>{date.today().strftime('%A, %B %d, %Y')}</p>"
+#
+# READ SHEET VALUES
+#
 
-    html += f"<h4>Weather Forecast for {weather_results['city_name'].title()}</h4>"
-    html += "<ul>"
-    for hourly in weather_results["hourly_forecasts"]:
-        html += f"<li>{hourly['timestamp']} | {hourly['temp']} | {hourly['conditions'].upper()}</li>"
-    html += "</ul>"
+client = gspread.authorize(credentials) #> <class 'gspread.client.Client'>
 
-    send_email(subject="Birthday's This Week", html=html)
+doc = client.open_by_key(DOCUMENT_ID) #> <class 'gspread.models.Spreadsheet'>
+
+print("-----------------")
+print("SPREADSHEET:", doc.title)
+print("-----------------")
+
+sheet = doc.worksheet(SHEET_NAME) #> <class 'gspread.models.Worksheet'>
+
+rows = sheet.get_all_records() #> <class 'list'>
+
+for row in rows:
+    print(row) #> <class 'dict'>
+
+#
+# WRITE VALUES TO SHEET
+#
+
+# next_id = len(rows) + 1 # TODO: should change this to be one greater than the current maximum id value
+
+# next_object = {
+#     "id": next_id,
+#     "name": f"Product {next_id}",
+#     "department": "snacks",
+#     "price": 4.99,
+#     "availability_date": "2019-01-01"
+# }
+
+# next_row = list(next_object.values()) #> [13, 'Product 13', 'snacks', 4.99, '2019-01-01']
+
+# next_row_number = len(rows) + 2 # number of records, plus a header row, plus one
+
+# response = sheet.insert_row(next_row, next_row_number)
+
+# print("-----------------")
+# print("NEW RECORD:")
+# print(next_row)
+# print("-----------------")
+# print("RESPONSE:)
+# print(type(response)) #> dict
+# print(response) #> {'spreadsheetId': '___', 'updatedRange': '___', 'updatedRows': 1, 'updatedColumns': 5, 'updatedCells': 5}
