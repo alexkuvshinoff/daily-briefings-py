@@ -2,10 +2,20 @@
 
 from dotenv import load_dotenv
 import os
+from app import APP_ENV
 from datetime import date, datetime
+
+import json
+from pprint import pprint
 
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+
+from app import APP_ENV
+from app.email_service import send_email
 
 load_dotenv()
 
@@ -48,5 +58,7 @@ for row in rows:
     rowDate = datetime.strptime(row['DOB:'],"%m/%d/%Y").date().replace(year=todaysDate.year)
     if rowDate == todaysDate:
         print(row) #> <class 'dict'>
+
+
 
 
